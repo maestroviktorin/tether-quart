@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -77,6 +79,14 @@ impl std::ops::Mul<f64> for State {
     }
 }
 
+impl std::ops::Sub<State> for State {
+    type Output = Self;
+
+    fn sub(self, rhs: State) -> Self::Output {
+        self.add(rhs * -1.0f64)
+    }
+}
+
 pub struct TetheredSystem {
     pub params: SystemParameters,
 }
@@ -109,6 +119,7 @@ impl TetheredSystem {
         if tension < 0.0 { 0.0 } else { tension }
     }
 
+    // TODO: Use `anyhow`.
     pub fn right_hand_side(&self, state: &State, t: f64) -> Result<State, &'static str> {
         if state.l <= 0.0 {
             return Err("Tether length must be positive.");
