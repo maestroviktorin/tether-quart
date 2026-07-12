@@ -33,6 +33,14 @@ pub struct App {
     t1: f64,
     t2: f64,
     t3: f64,
+    init_v: f64,
+    init_l: f64,
+    init_omega: f64,
+    init_theta: f64,
+    tol_abs: f64,
+    tol_rel: f64,
+    h_min: f64,
+    h_max: f64,
     tx_cmd: Sender<SimulationCmd>,
     rx_update: Receiver<SimulationUpdate>,
     pub history: Vec<SimulationUpdate>,
@@ -59,6 +67,14 @@ impl App {
             t1: 30.0,
             t2: 60.0,
             t3: 90.0,
+            init_v: 0.1,
+            init_l: 5.0,
+            init_omega: 0.02,
+            init_theta: 0.0,
+            tol_abs: 1e-6,
+            tol_rel: 1e-6,
+            h_min: 1e-4,
+            h_max: 1.0,
             tx_cmd,
             rx_update,
             history: Vec::new(),
@@ -123,9 +139,48 @@ impl eframe::App for App {
 
                 ui.separator();
 
+                ui.heading("Initial State Settings");
+                ui.horizontal(|ui| {
+                    ui.add(egui::Label::new("Length rate of change, v:"));
+                    ui.add(egui::DragValue::new(&mut self.init_v).suffix(" m/s"));
+                });
+                ui.horizontal(|ui| {
+                    ui.add(egui::Label::new("Tethers length, l:"));
+                    ui.add(egui::DragValue::new(&mut self.init_l).suffix(" m"));
+                });
+                ui.horizontal(|ui| {
+                    ui.add(egui::Label::new("Angle velocity, omega:"));
+                    ui.add(egui::DragValue::new(&mut self.init_omega).suffix(" rad/s"));
+                });
+                ui.horizontal(|ui| {
+                    ui.add(egui::Label::new("Orientation angle, theta:"));
+                    ui.add(egui::DragValue::new(&mut self.init_theta).suffix(" rad"));
+                });
+
+                ui.separator();
+
+                ui.heading("RKF45 Settings");
+                ui.horizontal(|ui| {
+                    ui.add(egui::Label::new("Absolute tolerance:"));
+                    ui.add(egui::DragValue::new(&mut self.tol_abs).min_decimals(6));
+                });
+                ui.horizontal(|ui| {
+                    ui.add(egui::Label::new("Relative tolerance:"));
+                    ui.add(egui::DragValue::new(&mut self.tol_rel).min_decimals(6));
+                });
+                ui.horizontal(|ui| {
+                    ui.add(egui::Label::new("Minimum step size:"));
+                    ui.add(egui::DragValue::new(&mut self.h_min).min_decimals(4));
+                });
+                ui.horizontal(|ui| {
+                    ui.add(egui::Label::new("Maximum step size:"));
+                    ui.add(egui::DragValue::new(&mut self.h_max).min_decimals(4));
+                });
+
+                ui.separator();
+
                 ui.horizontal(|ui| {
                     if ui.button("Start").clicked() {
-                        // TODO: Remove hard-coded values.
                         let params = SystemParameters {
                             m: self.m,
                             f0: self.f0,
@@ -137,8 +192,10 @@ impl eframe::App for App {
                             t2: self.t2,
                             t3: self.t3,
                         };
-                        let init_state = State::new(0.1, 5.0, 0.02, 0.0);
-                        let solver = Rkf45Solver::new(1e-6, 1e-6, 1e-4, 1.0);
+                        let init_state =
+                            State::new(self.init_v, self.init_l, self.init_omega, self.init_theta);
+                        let solver =
+                            Rkf45Solver::new(self.tol_abs, self.tol_rel, self.h_min, self.h_max);
                         let _ = self
                             .tx_cmd
                             .send(SimulationCmd::Start(params, init_state, solver));
