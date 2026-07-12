@@ -9,7 +9,7 @@ fn main() -> eframe::Result<()> {
     let (tx_cmd, rx_cmd) = channel();
     let (tx_update, rx_update) = channel();
 
-    // TODO: Spawn a thread with `rx_cmd` and `tx_update`.
+    simulation_worker::spawn_worker(rx_cmd, tx_update);
 
     let native_options = eframe::NativeOptions::default();
     eframe::run_native(

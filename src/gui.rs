@@ -1,6 +1,10 @@
-use std::sync::mpsc::{Receiver, Sender};
+use std::{
+    f32::consts::FRAC_PI_2,
+    sync::mpsc::{Receiver, Sender},
+};
 
 use egui::Rangef;
+use egui_plot::{Line, Plot, PlotPoints};
 
 use crate::{
     model::{State, SystemParameters},
@@ -122,7 +126,59 @@ impl eframe::App for App {
             });
 
         egui::CentralPanel::default().show(ui, |ui| {
-            ui.heading("Not Yet Implemented");
+            ui.take_available_space();
+            ui.vertical(|ui| {
+                ui.heading("TSS Scheme");
+                let last_state = self.history.last().map(|u| u.state);
+
+                let size = egui::vec2(ui.available_width(), 300.0);
+                let (rect, _) = ui.allocate_exact_size(size, egui::Sense::hover());
+                let painter = ui.painter_at(rect);
+                let center = rect.center();
+
+                if let Some(state) = last_state {
+                    let r = state.l / f64::sqrt(2.0);
+                    let scale = 0.4 * f64::from(rect.width()) / self.l_k;
+                    let angles =
+                        [0.0, 1.0, 2.0, 3.0].map(|i| state.theta + i * std::f64::consts::FRAC_PI_2);
+                    let points: Vec<egui::Pos2> = angles
+                        .iter()
+                        .map(|&a| {
+                            center
+                                + egui::vec2(
+                                    (r * a.cos() * scale) as f32,
+                                    (r * a.sin() * scale) as f32,
+                                )
+                        })
+                        .collect();
+                    let tension = self.history.last().map(|u| u.tension).unwrap_or(0.0);
+                    let line_color = if tension == 0.0 {
+                        egui::Color32::from_rgb(100, 149, 237)
+                    } else if tension > 50.0 {
+                        egui::Color32::from_rgb(220, 20, 60)
+                    } else {
+                        egui::Color32::from_rgb(50, 205, 50)
+                    };
+
+                    for i in 0..4 {
+                        painter.line_segment([points[i], points[(i + 1) % 4]], (2.0, line_color));
+                        painter.circle_filled(points[i], 8.0, egui::Color32::GRAY);
+                    }
+                }
+
+                ui.separator();
+
+                ui.heading("Graph: l(t)");
+                let points: PlotPoints = self.history.iter().map(|u| [u.t, u.state.l]).collect();
+                let line = Line::new("l(t)", points);
+                Plot::new("len_plot")
+                    .height(200.0)
+                    .show(ui, |plot_ui| plot_ui.line(line));
+            });
         });
+
+        if self.is_running {
+            ui.request_repaint();
+        }
     }
 }
