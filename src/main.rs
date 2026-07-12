@@ -1,8 +1,20 @@
+use std::sync::mpsc::channel;
+
+mod gui;
 mod model;
 mod rkf45;
-mod gui;
 mod simulation_worker;
 
-fn main() {
-    println!("Hello, world!");
+fn main() -> eframe::Result<()> {
+    let (tx_cmd, rx_cmd) = channel();
+    let (tx_update, rx_update) = channel();
+
+    // TODO: Spawn a thread with `rx_cmd` and `tx_update`.
+
+    let native_options = eframe::NativeOptions::default();
+    eframe::run_native(
+        "Tether Quart",
+        native_options,
+        Box::new(|cc| Ok(Box::new(gui::App::new(cc, tx_cmd, rx_update)))),
+    )
 }

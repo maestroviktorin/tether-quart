@@ -1,5 +1,6 @@
 use crate::model::{State, TetheredSystem};
 
+#[derive(Debug)]
 pub struct Rkf45Solver {
     pub tol_abs: f64,
     pub tol_rel: f64,
