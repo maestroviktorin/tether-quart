@@ -3,6 +3,7 @@
         "domega",
         "dtheta",
         "eframe",
-        "egui"
+        "egui",
+        "Rangef"
     ]
 }
