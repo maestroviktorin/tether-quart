@@ -1,7 +1,4 @@
-use std::{
-    f32::consts::FRAC_PI_2,
-    sync::mpsc::{Receiver, Sender},
-};
+use std::sync::mpsc::{Receiver, Sender};
 
 use egui::Rangef;
 use egui_plot::{Line, Plot, PlotPoints};
@@ -28,9 +25,14 @@ pub struct SimulationUpdate {
 
 pub struct App {
     m: f64,
+    f0: f64,
+    phi: f64,
     l_k: f64,
     k_l: f64,
     k_v: f64,
+    t1: f64,
+    t2: f64,
+    t3: f64,
     tx_cmd: Sender<SimulationCmd>,
     rx_update: Receiver<SimulationUpdate>,
     pub history: Vec<SimulationUpdate>,
@@ -48,10 +50,15 @@ impl App {
         cc.egui_ctx.set_visuals(visuals);
 
         Self {
-            m: 120.0,
+            m: 25.0,
+            f0: 5.0,
+            phi: 0.0,
             l_k: 500.0,
             k_l: 1.5,
-            k_v: 10.0,
+            k_v: 3.2,
+            t1: 30.0,
+            t2: 60.0,
+            t3: 90.0,
             tx_cmd,
             rx_update,
             history: Vec::new(),
@@ -71,23 +78,47 @@ impl eframe::App for App {
             .show(ui, |ui| {
                 ui.take_available_space();
                 ui.heading("TSS Settings");
-                ui.add(egui::Slider::new(&mut self.m, 10.0..=100.0).text("Mass m, kg"));
-                // Possible TODO: Make all members of `SystemParameters` configurable parameters of `Self`.
+                ui.add(
+                    egui::Slider::new(&mut self.m, 10.0..=100.0)
+                        .suffix(" kg")
+                        .text("Mass, m"),
+                );
+                ui.add(
+                    egui::Slider::new(&mut self.f0, 0.0..=100.00)
+                        .suffix(" N")
+                        .text("Thrust force, f0"),
+                );
+                ui.add(
+                    egui::Slider::new(&mut self.phi, 0.0..=359.00)
+                        .suffix("°")
+                        .text("Force direction angle, phi"),
+                );
+
+                // TODO: Implement fool resistance.
+                ui.horizontal(|ui| {
+                    ui.add(egui::Label::new("t1:"));
+                    ui.add(egui::DragValue::new(&mut self.t1));
+                    ui.add(egui::Label::new("t2:"));
+                    ui.add(egui::DragValue::new(&mut self.t2));
+                    ui.add(egui::Label::new("t3:"));
+                    ui.add(egui::DragValue::new(&mut self.t3));
+                });
 
                 ui.separator();
 
                 ui.heading("Control Law Settings");
                 ui.add(
                     egui::Slider::new(&mut self.l_k, 10.0..=1500.0)
-                        .text("Target tethers length l_k, m"),
+                        .suffix(" m")
+                        .text("Target tethers length, l_k"),
                 );
                 ui.add(
                     egui::Slider::new(&mut self.k_l, 0.0..=10.0)
-                        .text("Length regulation ratio, N/m"),
+                        .text("Length regulation ratio, k_l"),
                 );
                 ui.add(
                     egui::Slider::new(&mut self.k_v, 0.0..=10.0)
-                        .text("Velocity regulation ratio, N*s/m"),
+                        .text("Velocity regulation ratio, k_v"),
                 );
 
                 ui.separator();
@@ -97,14 +128,14 @@ impl eframe::App for App {
                         // TODO: Remove hard-coded values.
                         let params = SystemParameters {
                             m: self.m,
-                            f0: 5.0,
-                            phi: 0.0,
+                            f0: self.f0,
+                            phi: self.phi,
                             l_k: self.l_k,
                             k_l: self.k_l,
                             k_v: self.k_v,
-                            t1: 12.0,
-                            t2: 20.0,
-                            t3: 29.0,
+                            t1: self.t1,
+                            t2: self.t2,
+                            t3: self.t3,
                         };
                         let init_state = State::new(0.1, 5.0, 0.02, 0.0);
                         let solver = Rkf45Solver::new(1e-6, 1e-6, 1e-4, 1.0);
@@ -170,7 +201,7 @@ impl eframe::App for App {
             });
 
         egui::CentralPanel::default().show(ui, |ui| {
-            ui.heading("Graph: l(t)");
+            ui.heading("Plot: l(t)");
             let points: PlotPoints = self.history.iter().map(|u| [u.t, u.state.l]).collect();
             let line = Line::new("l(t)", points);
             Plot::new("len_plot")
