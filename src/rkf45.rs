@@ -1,5 +1,7 @@
 use crate::model::{State, TetheredSystem};
 
+use anyhow::{Result, anyhow};
+
 #[derive(Debug)]
 pub struct Rkf45Solver {
     pub tol_abs: f64,
@@ -18,7 +20,6 @@ impl Rkf45Solver {
         }
     }
 
-    // TODO: Use `anyhow`.
     /// Returns: `(next_state: State, h_used: f64, h_next: f64)`.
     pub fn adaptive_step(
         &self,
@@ -26,7 +27,7 @@ impl Rkf45Solver {
         state: &State,
         t: f64,
         h_current: f64,
-    ) -> Result<(State, f64, f64), &'static str> {
+    ) -> Result<(State, f64, f64)> {
         let mut h = h_current.clamp(self.h_min, self.h_max);
 
         loop {
@@ -86,7 +87,11 @@ impl Rkf45Solver {
 
             h = h_next;
             if h < self.h_min {
-                return Err("Integration step became extremely small.");
+                return Err(anyhow!(
+                    "Integration step h={:?} must be greater than {:?}.",
+                    h,
+                    self.h_min
+                ));
             }
         }
     }

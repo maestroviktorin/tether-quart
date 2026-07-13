@@ -1,5 +1,6 @@
 use std::ops::Add;
 
+use anyhow::{Result, anyhow};
 use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -119,10 +120,9 @@ impl TetheredSystem {
         if tension < 0.0 { 0.0 } else { tension }
     }
 
-    // TODO: Use `anyhow`.
-    pub fn right_hand_side(&self, state: &State, t: f64) -> Result<State, &'static str> {
+    pub fn right_hand_side(&self, state: &State, t: f64) -> Result<State> {
         if state.l <= 0.0 {
-            return Err("Tether length must be positive.");
+            return Err(anyhow!("Tether length l={:?} must be positive.", state.l));
         }
 
         let f = self.thrust_force(t);
