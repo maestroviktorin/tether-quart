@@ -1,9 +1,12 @@
 {
     "cSpell.words": [
+        "commonmark",
         "domega",
         "dtheta",
         "eframe",
         "egui",
-        "Rangef"
+        "Rangef",
+        "ratex",
+        "serde"
     ]
 }

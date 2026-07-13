@@ -7,5 +7,10 @@ edition = "2024"
 anyhow = "1.0.103"
 eframe = "0.35.0"
 egui = "0.35.0"
+egui_commonmark = "0.24.0"
+egui_extras = { version = "0.35.0", features = ["svg"] }
 egui_plot = "0.36.0"
+ratex-layout = "0.1.13"
+ratex-parser = "0.1.13"
+ratex-svg = { version = "0.1.13", features = ["standalone", "embed-fonts"] }
 serde = { version = "1.0.228", features = ["derive"] }
