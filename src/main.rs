@@ -1,6 +1,7 @@
 use std::sync::mpsc::channel;
 
-mod gui;
+mod app;
+mod components;
 mod model;
 mod rkf45;
 mod simulation_worker;
@@ -15,6 +16,6 @@ fn main() -> eframe::Result<()> {
     eframe::run_native(
         "Tether Quart",
         native_options,
-        Box::new(|cc| Ok(Box::new(gui::App::new(cc, tx_cmd, rx_update)))),
+        Box::new(|cc| Ok(Box::new(app::App::new(cc, tx_cmd, rx_update)))),
     )
 }

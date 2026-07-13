@@ -1,7 +1,7 @@
 use std::sync::mpsc::{Receiver, Sender};
 
 use crate::{
-    gui::{SimulationCmd, SimulationUpdate},
+    app::{SimulationCmd, SimulationUpdate},
     model::{State, TetheredSystem},
     rkf45::Rkf45Solver,
 };
@@ -21,6 +21,7 @@ pub fn spawn_worker(rx_cmd: Receiver<SimulationCmd>, tx_update: Sender<Simulatio
                         paused = false;
                     }
                     SimulationCmd::Pause => paused = true,
+                    SimulationCmd::Resume => paused = false,
                     SimulationCmd::Reset => active_sim = None,
                 }
             }
