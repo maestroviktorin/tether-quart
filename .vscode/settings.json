@@ -5,8 +5,11 @@
         "dtheta",
         "eframe",
         "egui",
+        "Fehlberg",
+        "Kutta",
         "Rangef",
         "ratex",
+        "Runge",
         "serde"
     ]
 }

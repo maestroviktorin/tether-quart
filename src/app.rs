@@ -18,6 +18,8 @@ use crate::{
     rkf45::Rkf45Solver,
 };
 
+const ABOUT: &str = include_str!("assets/markdown/about.md");
+
 #[derive(Debug)]
 pub enum SimulationCmd {
     Start(SystemParameters, State, Rkf45Solver),
@@ -46,7 +48,7 @@ pub struct SimulationUpdate {
 pub enum Tab {
     #[default]
     Dashboard,
-    Reference,
+    About,
 }
 
 pub struct App {
@@ -90,13 +92,13 @@ impl eframe::App for App {
         egui::Panel::top("top_navigation_bar").show(ui, |ui| {
             ui.horizontal(|ui| {
                 ui.selectable_value(&mut self.active_tab, Tab::Dashboard, "Dashboard");
-                ui.selectable_value(&mut self.active_tab, Tab::Reference, "Reference");
+                ui.selectable_value(&mut self.active_tab, Tab::About, "About");
             });
         });
 
         egui::CentralPanel::default().show(ui, |ui| match self.active_tab {
             Tab::Dashboard => dashboard(self, ui, frame),
-            Tab::Reference => reference(self, ui, frame),
+            Tab::About => about(self, ui, frame),
         });
     }
 }
@@ -179,24 +181,12 @@ fn dashboard(app: &mut App, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
     }
 }
 
-fn reference(app: &mut App, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
+fn about(app: &mut App, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
     let math_cache = Rc::clone(&app.math_cache);
-    let markdown = r#"
-# Heading 1
-
-## Heading 2
-
-*Italic* and **Bold**
-
-- a
-- b
-- c
-
-$\frac{\partial \omega_{\theta}}{dt}$
-"#;
 
     egui::CentralPanel::default().show(ui, |ui| {
         egui::ScrollArea::vertical().show(ui, |ui| {
+            ui.take_available_space();
             CommonMarkViewer::new()
                 .render_math_fn(Some(&move |ui, math_str, inline| {
                     let math_string = math_str.to_string();
@@ -226,10 +216,10 @@ $\frac{\partial \omega_{\theta}}{dt}$
                             uri: uri.into(),
                             bytes: egui::load::Bytes::Shared(svg_bytes),
                         })
-                        .fit_to_original_size(0.66),
+                        .fit_to_original_size(0.33),
                     );
                 }))
-                .show(ui, &mut app.common_mark_cache, markdown);
+                .show(ui, &mut app.common_mark_cache, ABOUT);
         });
     });
 }
