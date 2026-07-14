@@ -55,7 +55,7 @@ $\text{where:}$
 
 $\cdot \text{ } F - \text{thrust forces magnitude,}$  
 $\cdot \text{ } T - \text{tethers tension forces magnitude,}$  
-$\cdot \text{ } m - \text{microsatellites mass,}$  
+$\cdot \text{ } m - \text{mass of a single microsatellite,}$  
 $\cdot \text{ } \varphi - \text{thrust forces direction angle.}$
 
 $\text{3. Thrust forces change program:}$
