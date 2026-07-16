@@ -6,7 +6,7 @@ use std::{
 use egui::Rangef;
 
 use crate::{
-    components::{self, about::AboutComponent, settings::SettingsComponent},
+    components::{self, about::AboutComponent, plots::PlotsComponent, settings::SettingsComponent},
     model::{State, SystemParameters},
     rkf45::Rkf45Solver,
 };
@@ -46,6 +46,7 @@ pub struct App {
     active_tab: Tab,
     about: AboutComponent,
     settings: SettingsComponent,
+    plots: PlotsComponent,
     simulation_state: SimulationState,
     tx_cmd: Sender<SimulationCmd>,
     rx_update: Receiver<SimulationUpdate>,
@@ -66,6 +67,7 @@ impl App {
             active_tab: Tab::default(),
             about: AboutComponent::default(),
             settings: SettingsComponent::default(),
+            plots: PlotsComponent::default(),
             simulation_state: SimulationState::default(),
             tx_cmd,
             rx_update,
@@ -124,7 +126,10 @@ fn dashboard(app: &mut App, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
         });
 
     egui::CentralPanel::default().show(ui, |ui| {
-        components::plots::render(ui, frame, &app.history);
+        egui::ScrollArea::vertical().show(ui, |ui| {
+            ui.take_available_space();
+            components::plots::render(ui, frame, &app.history, &mut app.plots);
+        });
     });
 
     if app.simulation_state == SimulationState::Running {

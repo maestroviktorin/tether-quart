@@ -2,7 +2,6 @@ use std::sync::mpsc::channel;
 
 mod app;
 mod components;
-mod macros;
 mod model;
 mod rkf45;
 mod simulation_worker;
