@@ -1,0 +1,60 @@
+<svg aria-labelledby="title desc" viewBox="0 0 200 200" height="200" width="200" xmlns="http://www.w3.org/2000/svg">
+  <title>Tethered Satellites Logo</title>
+  <desc id="desc">Minimal icon of four satellites forming a diamond (45-degree rotated square) connected by tethers, for a space modelling app. Light theme.</desc>
+  
+  
+  <circle stroke="none" fill="#f8f9fa" r="92" cy="100" cx="100"></circle>
+
+  
+  
+  <line stroke-linecap="round" stroke-width="3" stroke="#2c3e50" y2="100" x2="162" y1="38" x1="100"></line>
+  
+  <line stroke-linecap="round" stroke-width="3" stroke="#2c3e50" y2="162" x2="100" y1="100" x1="162"></line>
+  
+  <line stroke-linecap="round" stroke-width="3" stroke="#2c3e50" y2="100" x2="38" y1="162" x1="100"></line>
+  
+  <line stroke-linecap="round" stroke-width="3" stroke="#2c3e50" y2="38" x2="100" y1="100" x1="38"></line>
+
+  
+
+  
+  
+  <rect stroke-width="2" stroke="#2c3e50" fill="#3498db" rx="2" height="11" width="14" y="29" x="93"></rect>
+  
+  <rect stroke-width="1.5" stroke="#2c3e50" fill="#2980b9" rx="1" height="7" width="12" y="31" x="80"></rect>
+  <rect stroke-width="1.5" stroke="#2c3e50" fill="#2980b9" rx="1" height="7" width="12" y="31" x="108"></rect>
+  
+  <line stroke-width="2" stroke="#2c3e50" y2="23" x2="100" y1="29" x1="100"></line>
+  <circle fill="#e74c3c" cy="22" cx="100" r="1.5"></circle>
+
+  
+  
+  <rect transform="rotate(45 164 98.5)" stroke-width="2" stroke="#2c3e50" fill="#3498db" rx="2" height="11" width="14" y="93" x="157"></rect>
+  
+  <rect transform="rotate(45 168 92)" stroke-width="1.5" stroke="#2c3e50" fill="#2980b9" rx="1" height="7" width="12" y="81" x="162"></rect>
+  <rect transform="rotate(45 168 112)" stroke-width="1.5" stroke="#2c3e50" fill="#2980b9" rx="1" height="7" width="12" y="106" x="162"></rect>
+  
+  <line stroke-width="2" stroke="#2c3e50" y2="98.5" x2="178" y1="98.5" x1="171"></line>
+  <circle fill="#e74c3c" cy="98.5" cx="179" r="1.5"></circle>
+
+  
+  
+  <rect stroke-width="2" stroke="#2c3e50" fill="#3498db" rx="2" height="11" width="14" y="157" x="93"></rect>
+  
+  <rect stroke-width="1.5" stroke="#2c3e50" fill="#2980b9" rx="1" height="7" width="12" y="159" x="80"></rect>
+  <rect stroke-width="1.5" stroke="#2c3e50" fill="#2980b9" rx="1" height="7" width="12" y="159" x="108"></rect>
+  
+  <line stroke-width="2" stroke="#2c3e50" y2="175" x2="100" y1="168" x1="100"></line>
+  <circle fill="#e74c3c" cy="176" cx="100" r="1.5"></circle>
+
+  
+  
+  <rect transform="rotate(-45 36 98.5)" stroke-width="2" stroke="#2c3e50" fill="#3498db" rx="2" height="11" width="14" y="93" x="29"></rect>
+  
+  <rect transform="rotate(-45 32 92)" stroke-width="1.5" stroke="#2c3e50" fill="#2980b9" rx="1" height="7" width="12" y="81" x="26"></rect>
+  <rect transform="rotate(-45 32 112)" stroke-width="1.5" stroke="#2c3e50" fill="#2980b9" rx="1" height="7" width="12" y="106" x="26"></rect>
+  
+  <line stroke-width="2" stroke="#2c3e50" y2="98.5" x2="22" y1="98.5" x1="29"></line>
+  <circle fill="#e74c3c" cy="98.5" cx="21" r="1.5"></circle>
+
+</svg>
