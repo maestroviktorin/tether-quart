@@ -61,7 +61,6 @@ pub fn render(
         .show(ui, common_mark_cache, ABOUT);
 }
 
-// TODO: Use `anyhow`.
 fn compile_latex_to_svg(latex: &str, inline: bool) -> Result<Arc<[u8]>> {
     let parsed = ratex_parser::parse(latex).map_err(|e| anyhow!("LaTeX parse error: {:?}", e))?;
 

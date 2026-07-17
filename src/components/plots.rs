@@ -1,3 +1,4 @@
+use egui::{Color32, RichText};
 use egui_plot::{Line, Plot, PlotPoints};
 
 use crate::app::SimulationUpdate;
@@ -73,22 +74,15 @@ pub struct PlotsComponent {
 impl Default for PlotsComponent {
     fn default() -> Self {
         Self {
-            plots: vec![
-                PlotComponent {
-                    id_source: "plot_1".to_string(),
-                    x_var: PlotVariable::T,
-                    y_var: PlotVariable::L,
-                },
-                PlotComponent {
-                    id_source: "plot_2".to_string(),
-                    x_var: PlotVariable::T,
-                    y_var: PlotVariable::Tension,
-                },
-            ],
+            plots: vec![PlotComponent {
+                id_source: "plot_1".to_string(),
+                x_var: PlotVariable::T,
+                y_var: PlotVariable::L,
+            }],
             show_add_modal: Default::default(),
             new_plot_x: PlotVariable::T,
-            new_plot_y: PlotVariable::L,
-            plot_counter: 2,
+            new_plot_y: PlotVariable::Tension,
+            plot_counter: 1,
         }
     }
 }
@@ -114,10 +108,8 @@ pub fn render(
                 ui.heading(plot.title());
 
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if len > 1 {
-                        if ui.button("❌").clicked() {
-                            action = Some(Action::Delete(i));
-                        }
+                    if ui.button("❌").clicked() {
+                        action = Some(Action::Delete(i));
                     }
 
                     if i < len - 1 {
@@ -148,9 +140,11 @@ pub fn render(
             ui.add_space(10.0);
         });
 
-        ui.separator();
+        if len > 0 {
+            ui.separator();
+        }
 
-        if ui.button("➕").clicked() {
+        if ui.button("Add Plot").clicked() {
             plots.show_add_modal = true;
         }
     });
@@ -175,5 +169,69 @@ pub fn render(
         }
     }
 
-    // TODO: Somehow show the modal window.
+    render_add_modal(plots, ui.ctx());
+}
+
+fn render_add_modal(plots: &mut PlotsComponent, ctx: &egui::Context) {
+    if !plots.show_add_modal {
+        return;
+    }
+
+    let mut open = true;
+    egui::Window::new("Add Plot")
+        .open(&mut open)
+        .collapsible(false)
+        .resizable(false)
+        .movable(true)
+        .drag_area(egui::WindowDrag::TitleBar)
+        .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+        .show(ctx, |ui| {
+            ui.vertical(|ui| {
+                ui.horizontal(|ui| {
+                    ui.label("X-axis:");
+                    egui::ComboBox::from_id_salt("new_plot_x")
+                        .selected_text(plots.new_plot_x.as_str())
+                        .show_ui(ui, |ui| {
+                            PlotVariable::ALL.iter().for_each(|var| {
+                                ui.selectable_value(&mut plots.new_plot_x, *var, var.as_str());
+                            });
+                        });
+                });
+
+                ui.horizontal(|ui| {
+                    ui.label("Y-axis:");
+                    egui::ComboBox::from_id_salt("new_plot_y")
+                        .selected_text(plots.new_plot_y.as_str())
+                        .show_ui(ui, |ui| {
+                            PlotVariable::ALL.iter().for_each(|var| {
+                                ui.selectable_value(&mut plots.new_plot_y, *var, var.as_str());
+                            });
+                        });
+                });
+
+                ui.add_space(10.0);
+
+                ui.horizontal(|ui| {
+                    if ui
+                        .button(RichText::new("Cancel").color(Color32::RED))
+                        .clicked()
+                    {
+                        plots.show_add_modal = false;
+                    }
+
+                    if ui.button("Confirm").clicked() {
+                        plots.plot_counter += 1;
+                        plots.plots.push(PlotComponent {
+                            id_source: format!("plot_{:?}", plots.plot_counter),
+                            x_var: plots.new_plot_x,
+                            y_var: plots.new_plot_y,
+                        });
+                        plots.show_add_modal = false;
+                    }
+                });
+            });
+        });
+    if !open {
+        plots.show_add_modal = false;
+    }
 }
