@@ -16,7 +16,7 @@ pub fn render(
 
     if let Some(state) = last_state {
         let r = state.l / f64::sqrt(2.0);
-        let scale = 0.4 * f64::from(rect.width()) / settings.l_k;
+        let scale = 0.4 * f64::from(rect.width()) / settings.config.l_k;
         let angles = [0.0, 1.0, 2.0, 3.0].map(|i| state.theta + i * std::f64::consts::FRAC_PI_2);
         let points: Vec<egui::Pos2> = angles
             .iter()

@@ -27,27 +27,27 @@ pub fn render(
             .clicked()
         {
             let params = SystemParameters {
-                m: settings.m,
-                f0: settings.f0,
-                phi: settings.phi,
-                l_k: settings.l_k,
-                k_l: settings.k_l,
-                k_v: settings.k_v,
-                t1: settings.t1,
-                t2: settings.t2,
-                t3: settings.t3,
+                m: settings.config.m,
+                f0: settings.config.f0,
+                phi: settings.config.phi,
+                l_k: settings.config.l_k,
+                k_l: settings.config.k_l,
+                k_v: settings.config.k_v,
+                t1: settings.config.t1,
+                t2: settings.config.t2,
+                t3: settings.config.t3,
             };
             let init_state = State::new(
-                settings.init_v,
-                settings.init_l,
-                settings.init_omega,
-                settings.init_theta,
+                settings.config.init_v,
+                settings.config.init_l,
+                settings.config.init_omega,
+                settings.config.init_theta,
             );
             let solver = Rkf45Solver::new(
-                settings.tol_abs,
-                settings.tol_rel,
-                settings.h_min,
-                settings.h_max,
+                settings.config.tol_abs,
+                settings.config.tol_rel,
+                settings.config.h_min,
+                settings.config.h_max,
             );
             let _ = tx_cmd.send(SimulationCmd::Start(params, init_state, solver));
             *simulation_state = SimulationState::Running;
