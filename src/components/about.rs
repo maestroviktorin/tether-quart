@@ -26,6 +26,35 @@ pub fn render(
     common_mark_cache: &mut CommonMarkCache,
     math_cache: Rc<RefCell<HashMap<String, Arc<[u8]>>>>
 ) {
+    egui::ScrollArea::vertical().show(ui, |ui| {
+        let max_content_width = 800.0;
+        let available_width = ui.available_width();
+
+        if available_width > max_content_width {
+            let margin = (available_width - max_content_width) / 2.0;
+
+            ui.horizontal(|ui| {
+                ui.add_space(margin);
+
+                ui.vertical(|ui| {
+                    ui.set_max_width(max_content_width);
+                    common_mark_viewer(ui, common_mark_cache, math_cache);
+                });
+
+                ui.add_space(margin);
+            });
+        } else {
+            common_mark_viewer(ui, common_mark_cache, math_cache);
+        }
+    });
+}
+
+pub fn common_mark_viewer(
+    ui: &mut egui::Ui,
+    // `AboutComponent`'s fields passed separately.
+    common_mark_cache: &mut CommonMarkCache,
+    math_cache: Rc<RefCell<HashMap<String, Arc<[u8]>>>>
+) {
     CommonMarkViewer::new()
         .render_math_fn(Some(&move |ui, math_str, inline| {
             let math_string = math_str.to_string();

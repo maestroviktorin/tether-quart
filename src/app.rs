@@ -141,9 +141,6 @@ fn about(app: &mut App, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
     let math_cache = Rc::clone(&app.about.math_cache);
 
     egui::CentralPanel::default().show(ui, |ui| {
-        egui::ScrollArea::vertical().show(ui, |ui| {
-            ui.take_available_space();
-            components::about::render(ui, frame, &mut app.about.common_mark_cache, math_cache);
-        });
+        components::about::render(ui, frame, &mut app.about.common_mark_cache, math_cache);
     });
 }
