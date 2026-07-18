@@ -1,3 +1,4 @@
+use anyhow::{Result, anyhow};
 use egui_file_dialog::FileDialog;
 use serde::{Deserialize, Serialize};
 
@@ -52,9 +53,36 @@ impl Default for SettingsConfig {
     }
 }
 
+impl SettingsConfig {
+    // TODO: Apply validation logic to all `SettingsConfig`'s fields.
+    pub fn validate(&self) -> Result<()> {
+        if self.t1 < 0.0 {
+            return Err(anyhow!("Parameter t1 cannot be negative."));
+        }
+        if self.t2 < self.t1 + 1.0 {
+            return Err(anyhow!(
+                "Condition failed: t1 < t2. Difference must be at least 1.0\n(received t1 = {}, t2 = {}, t2 >= {} required)",
+                self.t1,
+                self.t2,
+                self.t1 + 1.0
+            ));
+        }
+        if self.t3 < self.t2 + 1.0 {
+            return Err(anyhow!(
+                "Condition failed: t2 < t3. Difference must be at least 1.0\n(received t2 = {}, t3 = {}, t3 >= {} required)",
+                self.t2,
+                self.t3,
+                self.t2 + 1.0
+            ));
+        }
+        anyhow::Ok(())
+    }
+}
+
 pub struct SettingsComponent {
     pub config: SettingsConfig,
     file_dialog: FileDialog,
+    error_message: Option<String>,
 }
 
 impl Default for SettingsComponent {
@@ -62,6 +90,7 @@ impl Default for SettingsComponent {
         Self {
             config: SettingsConfig::default(),
             file_dialog: FileDialog::new(),
+            error_message: None,
         }
     }
 }
@@ -86,15 +115,7 @@ pub fn render(ui: &mut egui::Ui, frame: &mut eframe::Frame, settings: &mut Setti
                     .text("Force direction angle, phi"),
             );
 
-            // TODO: Implement fool resistance.
-            ui.horizontal(|ui| {
-                ui.add(egui::Label::new("t1:"));
-                ui.add(egui::DragValue::new(&mut settings.config.t1));
-                ui.add(egui::Label::new("t2:"));
-                ui.add(egui::DragValue::new(&mut settings.config.t2));
-                ui.add(egui::Label::new("t3:"));
-                ui.add(egui::DragValue::new(&mut settings.config.t3));
-            });
+            time_drag_values(ui, settings);
         });
     ui.separator();
 
@@ -188,12 +209,76 @@ pub fn render(ui: &mut egui::Ui, frame: &mut eframe::Frame, settings: &mut Setti
                 }
                 DialogAction::Load => {
                     if let Ok(file) = std::fs::File::open(&path) {
-                        if let Ok(new_config) = serde_json::from_reader::<_, SettingsConfig>(file) {
-                            settings.config = new_config;
+                        match serde_json::from_reader::<_, SettingsConfig>(file) {
+                            Ok(new_config) => match new_config.validate() {
+                                Ok(()) => {
+                                    settings.config = new_config;
+                                }
+                                Err(validation_err) => {
+                                    settings.error_message =
+                                        Some(format!("Incorrect config:\n{:?}", validation_err));
+                                }
+                            },
+                            Err(serde_err) => {
+                                settings.error_message =
+                                    Some(format!("Failed to read config:\n{:?}", serde_err));
+                            }
                         }
                     }
                 }
             }
         }
     }
+
+    if let Some(err_msg) = &settings.error_message {
+        let mut open = true;
+
+        egui::Window::new("Load Config Error")
+            .open(&mut open)
+            .collapsible(false)
+            .resizable(false)
+            .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+            .show(ui.ctx(), |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.add_space(5.0);
+                    ui.label(err_msg);
+                    ui.add_space(10.0);
+                });
+            });
+
+        if !open {
+            settings.error_message = None;
+        }
+    }
+}
+
+fn time_drag_values(ui: &mut egui::Ui, settings: &mut SettingsComponent) {
+    ui.horizontal(|ui| {
+        ui.add(egui::Label::new("t1:"));
+        let dv1 = ui.add(egui::DragValue::new(&mut settings.config.t1));
+
+        ui.add(egui::Label::new("t2:"));
+        let dv2 = ui.add(egui::DragValue::new(&mut settings.config.t2));
+
+        ui.add(egui::Label::new("t3:"));
+        let dv3 = ui.add(egui::DragValue::new(&mut settings.config.t3));
+
+        if dv1.changed() {
+            settings.config.t1 = settings.config.t1.max(0.0);
+            settings.config.t2 = settings.config.t2.max(settings.config.t1 + 1.0);
+            settings.config.t3 = settings.config.t3.max(settings.config.t2 + 1.0);
+        }
+
+        if dv2.changed() {
+            settings.config.t2 = settings.config.t2.max(1.0);
+            settings.config.t1 = settings.config.t1.min(settings.config.t2 - 1.0);
+            settings.config.t3 = settings.config.t3.max(settings.config.t2 + 1.0);
+        }
+
+        if dv3.changed() {
+            settings.config.t3 = settings.config.t3.max(2.0);
+            settings.config.t2 = settings.config.t2.min(settings.config.t3 - 1.0);
+            settings.config.t1 = settings.config.t1.min(settings.config.t2 - 1.0);
+        }
+    });
 }
