@@ -2,6 +2,23 @@ use anyhow::{Result, anyhow};
 use egui_file_dialog::FileDialog;
 use serde::{Deserialize, Serialize};
 
+struct BoundaryValues;
+
+impl BoundaryValues {
+    pub const MIN_M: f64 = 10.0;
+    pub const MAX_M: f64 = 100.0;
+    pub const MIN_F0: f64 = 0.0;
+    pub const MAX_F0: f64 = 100.0;
+    pub const MIN_PHI: f64 = 0.0;
+    pub const MAX_PHI: f64 = 359.0;
+    pub const MIN_L_K: f64 = 10.0;
+    pub const MAX_L_K: f64 = 1500.0;
+    pub const MIN_K_L: f64 = 0.0;
+    pub const MAX_K_L: f64 = 10.0;
+    pub const MIN_K_V: f64 = 0.0;
+    pub const MAX_K_V: f64 = 10.0;
+}
+
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 enum DialogAction {
     Save,
@@ -54,8 +71,55 @@ impl Default for SettingsConfig {
 }
 
 impl SettingsConfig {
-    // TODO: Apply validation logic to all `SettingsConfig`'s fields.
     pub fn validate(&self) -> Result<()> {
+        if self.m < BoundaryValues::MIN_M || self.m > BoundaryValues::MAX_M {
+            return Err(anyhow!(
+                "Condition failed: {} <= m <= {}\n(received m = {})",
+                BoundaryValues::MIN_M,
+                BoundaryValues::MAX_M,
+                self.m
+            ));
+        }
+        if self.f0 < BoundaryValues::MIN_F0 || self.f0 > BoundaryValues::MAX_F0 {
+            return Err(anyhow!(
+                "Condition failed: {} <= f0 <= {}\n(received f0 = {})",
+                BoundaryValues::MIN_F0,
+                BoundaryValues::MAX_F0,
+                self.f0
+            ));
+        }
+        if self.phi < BoundaryValues::MIN_PHI || self.phi > BoundaryValues::MAX_PHI {
+            return Err(anyhow!(
+                "Condition failed: {} <= phi <= {}\n(received phi = {})",
+                BoundaryValues::MIN_PHI,
+                BoundaryValues::MAX_PHI,
+                self.phi
+            ));
+        }
+        if self.l_k < BoundaryValues::MIN_L_K || self.l_k > BoundaryValues::MAX_L_K {
+            return Err(anyhow!(
+                "Condition failed: {} <= l_k <= {}\n(received l_k = {})",
+                BoundaryValues::MIN_L_K,
+                BoundaryValues::MAX_L_K,
+                self.l_k
+            ));
+        }
+        if self.k_l < BoundaryValues::MIN_K_L || self.k_l > BoundaryValues::MAX_K_L {
+            return Err(anyhow!(
+                "Condition failed: {} <= k_l <= {}\n(received k_l = {})",
+                BoundaryValues::MIN_K_L,
+                BoundaryValues::MAX_K_L,
+                self.k_l
+            ));
+        }
+        if self.k_v < BoundaryValues::MIN_K_V || self.k_v > BoundaryValues::MAX_K_V {
+            return Err(anyhow!(
+                "Condition failed: {} <= k_v <= {}\n(received k_v = {})",
+                BoundaryValues::MIN_K_V,
+                BoundaryValues::MAX_K_V,
+                self.k_v
+            ));
+        }
         if self.t1 < 0.0 {
             return Err(anyhow!("Parameter t1 cannot be negative."));
         }
@@ -74,6 +138,30 @@ impl SettingsConfig {
                 self.t3,
                 self.t2 + 1.0
             ));
+        }
+        if self.init_v < 0.0 {
+            return Err(anyhow!("Parameter init_v cannot be negative."));
+        }
+        if self.init_l < 0.0 {
+            return Err(anyhow!("Parameter init_l cannot be negative."));
+        }
+        if self.init_omega < 0.0 {
+            return Err(anyhow!("Parameter init_omega cannot be negative."));
+        }
+        if self.init_theta < 0.0 {
+            return Err(anyhow!("Parameter init_theta cannot be negative."));
+        }
+        if self.tol_abs < 0.0 {
+            return Err(anyhow!("Parameter tol_abs cannot be negative."));
+        }
+        if self.tol_rel < 0.0 {
+            return Err(anyhow!("Parameter tol_rel cannot be negative."));
+        }
+        if self.h_min < 0.0 {
+            return Err(anyhow!("Parameter h_min cannot be negative."));
+        }
+        if self.h_max < 0.0 {
+            return Err(anyhow!("Parameter h_max cannot be negative."));
         }
         anyhow::Ok(())
     }
@@ -100,19 +188,28 @@ pub fn render(ui: &mut egui::Ui, frame: &mut eframe::Frame, settings: &mut Setti
         .default_open(true)
         .show(ui, |ui| {
             ui.add(
-                egui::Slider::new(&mut settings.config.m, 10.0..=100.0)
-                    .suffix(" kg")
-                    .text("Mass, m"),
+                egui::Slider::new(
+                    &mut settings.config.m,
+                    BoundaryValues::MIN_M..=BoundaryValues::MAX_M,
+                )
+                .suffix(" kg")
+                .text("Mass, m"),
             );
             ui.add(
-                egui::Slider::new(&mut settings.config.f0, 0.0..=100.00)
-                    .suffix(" N")
-                    .text("Thrust force, f0"),
+                egui::Slider::new(
+                    &mut settings.config.f0,
+                    BoundaryValues::MIN_F0..=BoundaryValues::MAX_F0,
+                )
+                .suffix(" N")
+                .text("Thrust force, f0"),
             );
             ui.add(
-                egui::Slider::new(&mut settings.config.phi, 0.0..=359.00)
-                    .suffix("°")
-                    .text("Force direction angle, phi"),
+                egui::Slider::new(
+                    &mut settings.config.phi,
+                    BoundaryValues::MIN_PHI..=BoundaryValues::MAX_PHI,
+                )
+                .suffix("°")
+                .text("Force direction angle, phi"),
             );
 
             time_drag_values(ui, settings);
@@ -123,17 +220,26 @@ pub fn render(ui: &mut egui::Ui, frame: &mut eframe::Frame, settings: &mut Setti
         .default_open(true)
         .show(ui, |ui| {
             ui.add(
-                egui::Slider::new(&mut settings.config.l_k, 10.0..=1500.0)
-                    .suffix(" m")
-                    .text("Target tethers length, l_k"),
+                egui::Slider::new(
+                    &mut settings.config.l_k,
+                    BoundaryValues::MIN_L_K..=BoundaryValues::MAX_L_K,
+                )
+                .suffix(" m")
+                .text("Target tethers length, l_k"),
             );
             ui.add(
-                egui::Slider::new(&mut settings.config.k_l, 0.0..=10.0)
-                    .text("Length regulation ratio, k_l"),
+                egui::Slider::new(
+                    &mut settings.config.k_l,
+                    BoundaryValues::MIN_K_L..=BoundaryValues::MAX_K_L,
+                )
+                .text("Length regulation ratio, k_l"),
             );
             ui.add(
-                egui::Slider::new(&mut settings.config.k_v, 0.0..=10.0)
-                    .text("Velocity regulation ratio, k_v"),
+                egui::Slider::new(
+                    &mut settings.config.k_v,
+                    BoundaryValues::MIN_K_V..=BoundaryValues::MAX_K_V,
+                )
+                .text("Velocity regulation ratio, k_v"),
             );
         });
     ui.separator();
