@@ -99,7 +99,7 @@ fn dashboard(app: &mut App, ui: &mut egui::Ui, frame: &mut eframe::Frame) {
         app.history.push(update);
     }
 
-    egui::Panel::left("params_panel")
+    egui::Panel::left("settings_panel")
         .size_range(Rangef::new(150.0, 450.0))
         .show(ui, |ui| {
             ui.take_available_space();

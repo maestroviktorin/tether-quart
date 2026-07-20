@@ -9,6 +9,7 @@ pub fn render(
     settings: &SettingsComponent,
 ) {
     ui.heading("TSS Scheme");
+    ui.label("'Ctrl + Wheel' to zoom");
     let size = ui.available_size();
     let scene_rect_id = ui.id().with("tss_scene_rect");
 
