@@ -1,7 +1,9 @@
 use egui::{Color32, RichText};
+use egui_file_dialog::FileDialog;
 use egui_plot::{Line, Plot, PlotPoints};
+use std::path::Path;
 
-use crate::app::SimulationUpdate;
+use crate::{app::SimulationUpdate, components::common::process_error_window};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PlotVariable {
@@ -69,6 +71,9 @@ pub struct PlotsComponent {
     pub new_plot_x: PlotVariable,
     pub new_plot_y: PlotVariable,
     plot_counter: usize,
+    pub file_dialog: FileDialog,
+    pub export_error_message: Option<String>,
+    pub add_error_message: Option<String>,
 }
 
 impl Default for PlotsComponent {
@@ -83,13 +88,16 @@ impl Default for PlotsComponent {
             new_plot_x: PlotVariable::T,
             new_plot_y: PlotVariable::Tension,
             plot_counter: 1,
+            file_dialog: FileDialog::new(),
+            export_error_message: None,
+            add_error_message: None,
         }
     }
 }
 
 pub fn render(
     ui: &mut egui::Ui,
-    frame: &mut eframe::Frame,
+    _frame: &mut eframe::Frame,
     history: &[SimulationUpdate],
     plots: &mut PlotsComponent,
 ) {
@@ -97,6 +105,7 @@ pub fn render(
         MoveUp(usize),
         MoveDown(usize),
         Delete(usize),
+        Export(usize),
     }
 
     let mut action: Option<Action> = None;
@@ -123,6 +132,10 @@ pub fn render(
                                 if ui.button("🔼").clicked() {
                                     action = Some(Action::MoveUp(i));
                                 }
+                            }
+
+                            if ui.button("📸").clicked() {
+                                action = Some(Action::Export(i));
                             }
                         });
 
@@ -159,7 +172,7 @@ pub fn render(
                 }
             }
             Action::MoveDown(i) => {
-                if i < plots.plots.len() {
+                if i < plots.plots.len() - 1 {
                     plots.plots.swap(i, i + 1);
                 }
             }
@@ -168,10 +181,119 @@ pub fn render(
                     plots.plots.remove(i);
                 }
             }
+            Action::Export(i) => {
+                let suggested_name = format!("{}.png", plots.plots[i].title());
+                plots.file_dialog = FileDialog::new()
+                    .default_file_name(&suggested_name)
+                    .add_file_filter(
+                        "PNG Image",
+                        egui_file_dialog::Filter::new(|path: &Path| {
+                            path.extension().unwrap_or_default() == "png"
+                        }),
+                    )
+                    .default_file_filter("PNG Image");
+
+                plots.file_dialog.set_user_data(i);
+                plots.file_dialog.save_file();
+            }
         }
     }
 
+    plots.file_dialog.update(ui.ctx());
+
+    if let Some(path) = plots.file_dialog.take_picked() {
+        if let Some(&plot_idx) = plots.file_dialog.user_data::<usize>() {
+            if plot_idx < plots.plots.len() {
+                let plot = &plots.plots[plot_idx];
+
+                let points_data: Vec<[f64; 2]> = history
+                    .iter()
+                    .map(|u| [plot.x_var.get_value(u), plot.y_var.get_value(u)])
+                    .collect();
+
+                if let Err(err) = save_plot_to_png(
+                    &path,
+                    &plot.title(),
+                    plot.x_var.as_str(),
+                    plot.y_var.as_str(),
+                    &points_data,
+                ) {
+                    plots.export_error_message =
+                        Some(format!("Failed to export the plot: {:?}", err));
+                }
+            }
+        }
+    }
+
+    process_error_window(ui, "Plot Export Error", &mut plots.export_error_message);
+    process_error_window(ui, "Plot Addition Error", &mut plots.add_error_message);
+
     render_add_modal(plots, ui.ctx());
+}
+
+fn save_plot_to_png(
+    path: &Path,
+    title: &str,
+    x_label: &str,
+    y_label: &str,
+    points: &[[f64; 2]],
+) -> anyhow::Result<()> {
+    use plotters::prelude::*;
+
+    if points.is_empty() {
+        return Err(anyhow::anyhow!("No points to plot"));
+    }
+
+    let root = BitMapBackend::new(path, (1024, 768)).into_drawing_area();
+    root.fill(&WHITE)?;
+
+    let mut min_x = points[0][0];
+    let mut max_x = points[0][0];
+    let mut min_y = points[0][1];
+    let mut max_y = points[0][1];
+
+    for p in points.iter().skip(1) {
+        min_x = min_x.min(p[0]);
+        max_x = max_x.max(p[0]);
+        min_y = min_y.min(p[1]);
+        max_y = max_y.max(p[1]);
+    }
+
+    let x_margin = if max_x == min_x {
+        1.0
+    } else {
+        (max_x - min_x) * 0.05
+    };
+    let y_margin = if max_y == min_y {
+        1.0
+    } else {
+        (max_y - min_y) * 0.05
+    };
+
+    let x_range = (min_x - x_margin)..(max_x + x_margin);
+    let y_range = (min_y - y_margin)..(max_y + y_margin);
+
+    let mut chart = ChartBuilder::on(&root)
+        .caption(title, ("monospace", 35).into_font())
+        .margin(20)
+        .x_label_area_size(50)
+        .y_label_area_size(60)
+        .build_cartesian_2d(x_range, y_range)?;
+
+    chart
+        .configure_mesh()
+        .x_desc(x_label)
+        .y_desc(y_label)
+        .axis_desc_style(("monospace", 20).into_font())
+        .draw()?;
+
+    chart.draw_series(LineSeries::new(
+        points.iter().map(|p| (p[0], p[1])),
+        &RGBColor(255, 0, 0),
+    ))?;
+
+    root.present()?;
+    Ok(())
 }
 
 fn render_add_modal(plots: &mut PlotsComponent, ctx: &egui::Context) {
@@ -222,13 +344,26 @@ fn render_add_modal(plots: &mut PlotsComponent, ctx: &egui::Context) {
                     }
 
                     if ui.button("Confirm").clicked() {
-                        plots.plot_counter += 1;
-                        plots.plots.push(PlotComponent {
-                            id_source: format!("plot_{:?}", plots.plot_counter),
-                            x_var: plots.new_plot_x,
-                            y_var: plots.new_plot_y,
-                        });
-                        plots.show_add_modal = false;
+                        let is_duplicate = plots
+                            .plots
+                            .iter()
+                            .any(|p| p.x_var == plots.new_plot_x && p.y_var == plots.new_plot_y);
+
+                        if is_duplicate {
+                            plots.add_error_message = Some(format!(
+                                "Plot {}({}) already exists.",
+                                plots.new_plot_y.as_str(),
+                                plots.new_plot_x.as_str()
+                            ));
+                        } else {
+                            plots.plot_counter += 1;
+                            plots.plots.push(PlotComponent {
+                                id_source: format!("plot_{:?}", plots.plot_counter),
+                                x_var: plots.new_plot_x,
+                                y_var: plots.new_plot_y,
+                            });
+                            plots.show_add_modal = false;
+                        }
                     }
                 });
             });

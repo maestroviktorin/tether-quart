@@ -1,10 +1,13 @@
 mod boundary_values;
 mod settings_config;
 
+use std::path::Path;
+
 use egui_file_dialog::FileDialog;
 
-use crate::components::settings::{
-    boundary_values::BoundaryValues, settings_config::SettingsConfig,
+use crate::components::{
+    common::process_error_window,
+    settings::{boundary_values::BoundaryValues, settings_config::SettingsConfig},
 };
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -23,7 +26,15 @@ impl Default for SettingsComponent {
     fn default() -> Self {
         Self {
             config: SettingsConfig::default(),
-            file_dialog: FileDialog::new(),
+            file_dialog: FileDialog::new()
+                .default_file_name("config.json")
+                .add_file_filter(
+                    "JSON Config",
+                    egui_file_dialog::Filter::new(|path: &Path| {
+                        path.extension().unwrap_or_default() == "json"
+                    }),
+                )
+                .default_file_filter("JSON Config"),
             error_message: None,
         }
     }
@@ -67,7 +78,7 @@ pub fn render(ui: &mut egui::Ui, frame: &mut eframe::Frame, settings: &mut Setti
 
     process_save_load(settings);
 
-    process_load_config_error(ui, &mut settings.error_message);
+    process_error_window(ui, "Load Config Error", &mut settings.error_message);
 }
 
 fn render_tss_settings(ui: &mut egui::Ui, config: &mut SettingsConfig) {
@@ -286,29 +297,6 @@ fn process_save_load(settings: &mut SettingsComponent) {
                     }
                 }
             }
-        }
-    }
-}
-
-fn process_load_config_error(ui: &mut egui::Ui, error_message: &mut Option<String>) {
-    if let Some(err_msg) = error_message {
-        let mut open = true;
-
-        egui::Window::new("Load Config Error")
-            .open(&mut open)
-            .collapsible(false)
-            .resizable(false)
-            .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
-            .show(ui.ctx(), |ui| {
-                ui.vertical_centered(|ui| {
-                    ui.add_space(5.0);
-                    ui.label(err_msg.to_owned());
-                    ui.add_space(10.0);
-                });
-            });
-
-        if !open {
-            *error_message = None;
         }
     }
 }
