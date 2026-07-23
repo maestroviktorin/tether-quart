@@ -105,39 +105,41 @@ pub fn render(
         let len = plots.plots.len();
         plots.plots.iter().enumerate().for_each(|(i, plot)| {
             ui.horizontal(|ui| {
-                ui.heading(plot.title());
+                egui::CollapsingHeader::new(RichText::new(plot.title()).heading())
+                    .default_open(true)
+                    .show(ui, |ui| {
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            if ui.button("❌").clicked() {
+                                action = Some(Action::Delete(i));
+                            }
 
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    if ui.button("❌").clicked() {
-                        action = Some(Action::Delete(i));
-                    }
+                            if i < len - 1 {
+                                if ui.button("🔽").clicked() {
+                                    action = Some(Action::MoveDown(i));
+                                }
+                            }
 
-                    if i < len - 1 {
-                        if ui.button("🔽").clicked() {
-                            action = Some(Action::MoveDown(i));
-                        }
-                    }
+                            if i > 0 {
+                                if ui.button("🔼").clicked() {
+                                    action = Some(Action::MoveUp(i));
+                                }
+                            }
+                        });
 
-                    if i > 0 {
-                        if ui.button("🔼").clicked() {
-                            action = Some(Action::MoveUp(i));
-                        }
-                    }
-                });
+                        let points: PlotPoints = history
+                            .iter()
+                            .map(|u| [plot.x_var.get_value(u), plot.y_var.get_value(u)])
+                            .collect();
+
+                        let line = Line::new(plot.title(), points);
+
+                        Plot::new(&plot.id_source)
+                            .height(200.0)
+                            .show(ui, |plot_ui| plot_ui.line(line));
+
+                        ui.add_space(10.0);
+                    });
             });
-
-            let points: PlotPoints = history
-                .iter()
-                .map(|u| [plot.x_var.get_value(u), plot.y_var.get_value(u)])
-                .collect();
-
-            let line = Line::new(plot.title(), points);
-
-            Plot::new(&plot.id_source)
-                .height(200.0)
-                .show(ui, |plot_ui| plot_ui.line(line));
-
-            ui.add_space(10.0);
         });
 
         if len > 0 {
