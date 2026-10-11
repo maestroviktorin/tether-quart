@@ -128,7 +128,7 @@ impl TetheredSystem {
         let f = self.thrust_force(t);
         let tension = self.tether_tension(state);
         let m = self.params.m;
-        let phi_offset = self.params.phi + std::f64::consts::FRAC_PI_4;
+        let phi_offset = self.params.phi.to_radians() + std::f64::consts::FRAC_PI_4;
 
         // dV/dt
         let dv_dt = state.l * state.omega.powi(2)
